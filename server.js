@@ -1,5 +1,5 @@
 import express from 'express'
-import { PrismaClient } from './generated/prisma'
+import { PrismaClient } from './generated/prisma/index.js';
 
 const prisma = new PrismaClient()
 
@@ -8,16 +8,64 @@ app.use(express.json())
 
 const usersList = []
 
-app.post('/users', (req, res) => {
+app.post('/users', async (req, res) => {
 
-    usersList.push(req.body)
+    await prisma.user.create({
+        data: {
+            email: req.body.email,
+            name: req.body.name,
+            age: req.body.age
+        }
+    })
 
     res.status(201).json(req.body)
 })
 
 
-app.get('/users', (req, res) => {
+app.get('/users', async (req, res) => {
+
+    let usersList = []
+
+    if (req.query) {
+        usersList = await prisma.user.findMany({
+            where: {
+                name: req.query.name,
+                email: req.query.email,
+                age: req.query.age
+            }
+        })
+    } else {
+        usersList = await prisma.user.findMany()
+    }
+
     res.status(200).json(usersList)
+})
+
+app.put('/users/:id', async (req, res) => {
+
+    await prisma.user.update({
+        where: {
+            id: req.params.id
+        },
+        data: {
+            email: req.body.email,
+            name: req.body.name,
+            age: req.body.age
+        }
+    })
+
+    res.status(201).json(req.body)
+})
+
+app.delete('/users/:id', async (req, res) => {
+
+    await prisma.user.delete({
+        where: {
+            id: req.params.id
+        }
+    })
+
+    res.status(204).json({ menssage: 'User deleted with Sucess!' })
 })
 
 app.listen(3000)
